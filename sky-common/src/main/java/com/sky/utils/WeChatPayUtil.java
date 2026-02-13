@@ -225,7 +225,7 @@ public class WeChatPayUtil {
         amount.put("currency", "CNY");
 
         jsonObject.put("amount", amount);
-        jsonObject.put("notify_url", weChatProperties.getRefundNotifyUrl());
+        jsonObject.put("notify_url", weChatProperties                                                                                        .getRefundNotifyUrl());
 
         String body = jsonObject.toJSONString();
 
