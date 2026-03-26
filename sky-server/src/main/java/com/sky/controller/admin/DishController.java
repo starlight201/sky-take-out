@@ -57,4 +57,30 @@ public class DishController {
        // clearRedis("dish_*");
         return Result.success();
     }
+    /**
+     * 根据id查询菜品
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public Result<DishVO> getById(@PathVariable Long id) {
+        log.info("根据id查询菜品：{}", id);
+        DishVO dishVO = dishService.getByIdWithFlavor(id);
+        return Result.success(dishVO);
+    }
+
+    /**
+     * 更新菜品
+     *
+     * @param dishDTO
+     * @return
+     */
+    @PutMapping
+    public Result<String> update(@RequestBody DishDTO dishDTO) {
+        log.info("更新菜品：{}", dishDTO);
+        dishService.updateWithFlavor(dishDTO);
+       // clearRedis("dish_*");
+        return Result.success();
+    }
 }
