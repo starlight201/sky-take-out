@@ -122,6 +122,66 @@ public class OrderServiceImpl implements OrderService {
 
         return orderSubmitVO;
     }
+    /**
+     * 订单支付
+     *
+     * @param ordersPaymentDTO
+     * @return
+     */
+    public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
+        // 当前登录用户id
+        // Long userId = BaseContext.getCurrentId();
+        // User user = userMapper.getById(userId);
+
+        // 直接调用paySuccess方法，模拟支付成功
+        paySuccess(ordersPaymentDTO.getOrderNumber());
+
+        // 调用微信支付接口，生成预支付交易单
+        // JSONObject jsonObject = weChatPayUtil.pay(
+        // ordersPaymentDTO.getOrderNumber(), // 商户订单号
+        // new BigDecimal(0.01), // 支付金额，单位 元
+        // "苍穹外卖订单", // 商品描述
+        // user.getOpenid() // 微信用户的openid
+        // );
+
+        // if (jsonObject.getString("code") != null &&
+        // jsonObject.getString("code").equals("ORDERPAID")) {
+        // throw new OrderBusinessException("该订单已支付");
+        // }
+
+        // OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
+        // vo.setPackageStr(jsonObject.getString("package"));
+
+        // return vo;
+        return null;
+    }
+
+    /**
+     * 支付成功，修改订单状态
+     *
+     * @param outTradeNo
+     */
+    public void paySuccess(String outTradeNo) {
+
+        // 根据订单号查询订单
+        Orders ordersDB = orderMapper.getByNumber(outTradeNo);
+
+        // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
+        Orders orders = orderMapper.getByNumber(outTradeNo);
+        orders.setStatus(Orders.TO_BE_CONFIRMED);
+        orders.setPayStatus(Orders.PAID);
+        orders.setCheckoutTime(LocalDateTime.now());
+        // 如果支付方式不变，不需要设置 payMethod
+        orderMapper.update(orders);
+
+        // 通过websocket通知商家
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 1); // 1:来单通知
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号: " + outTradeNo);
+        String msg = JSON.toJSONString(map);
+//        webSocketServer.sendToAllClient(msg);
+    }
 
 
 }
