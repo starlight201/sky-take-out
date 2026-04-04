@@ -3,6 +3,7 @@ package com.sky.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.sky.WebSocket.WebSocketServer;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.*;
@@ -59,8 +60,8 @@ public class OrderServiceImpl implements OrderService {
     // @Autowired
     // private UserMapper userMapper;
 
-//    @Autowired
-//    private WebSocketServer webSocketServer;
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     /**
      * 用户下单
@@ -180,7 +181,7 @@ public class OrderServiceImpl implements OrderService {
         map.put("orderId", ordersDB.getId());
         map.put("content", "订单号: " + outTradeNo);
         String msg = JSON.toJSONString(map);
-//        webSocketServer.sendToAllClient(msg);
+        webSocketServer.sendToAllClient(msg);
     }
 
 
