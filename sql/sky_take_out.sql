@@ -1,0 +1,441 @@
+/*
+ Navicat Premium Dump SQL
+
+ Source Server         : MySQL80
+ Source Server Type    : MySQL
+ Source Server Version : 80045 (8.0.45)
+ Source Host           : localhost:3307
+ Source Schema         : sky_take_out
+
+ Target Server Type    : MySQL
+ Target Server Version : 80045 (8.0.45)
+ File Encoding         : 65001
+
+ Date: 13/05/2026 17:46:32
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for address_book
+-- ----------------------------
+DROP TABLE IF EXISTS `address_book`;
+CREATE TABLE `address_book`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '用户id',
+  `consignee` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '收货人',
+  `sex` varchar(2) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '性别',
+  `phone` varchar(11) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '手机号',
+  `province_code` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '省级区划编号',
+  `province_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '省级名称',
+  `city_code` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '市级区划编号',
+  `city_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '市级名称',
+  `district_code` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '区级区划编号',
+  `district_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '区级名称',
+  `detail` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '详细地址',
+  `label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '标签',
+  `is_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT '默认 0 否 1是',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '地址簿' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of address_book
+-- ----------------------------
+INSERT INTO `address_book` VALUES (2, 4, '123', '1', '15678945623', '43', '湖南省', '4301', '长沙市', '430102', '芙蓉区', '101', '3', 1);
+
+-- ----------------------------
+-- Table structure for category
+-- ----------------------------
+DROP TABLE IF EXISTS `category`;
+CREATE TABLE `category`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `type` int NULL DEFAULT NULL COMMENT '类型   1 菜品分类 2 套餐分类',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '分类名称',
+  `sort` int NOT NULL DEFAULT 0 COMMENT '顺序',
+  `status` int NULL DEFAULT NULL COMMENT '分类状态 0:禁用，1:启用',
+  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  `create_user` bigint NULL DEFAULT NULL COMMENT '创建人',
+  `update_user` bigint NULL DEFAULT NULL COMMENT '修改人',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_category_name`(`name` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '菜品及套餐分类' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of category
+-- ----------------------------
+INSERT INTO `category` VALUES (11, 1, '酒水饮料', 10, 1, '2022-06-09 22:09:18', '2022-06-09 22:09:18', 1, 1);
+INSERT INTO `category` VALUES (12, 1, '传统主食', 9, 1, '2022-06-09 22:09:32', '2022-06-09 22:18:53', 1, 1);
+INSERT INTO `category` VALUES (13, 2, '人气套餐', 12, 1, '2022-06-09 22:11:38', '2022-06-10 11:04:40', 1, 1);
+INSERT INTO `category` VALUES (15, 2, '商务套餐', 13, 1, '2022-06-09 22:14:10', '2022-06-10 11:04:48', 1, 1);
+INSERT INTO `category` VALUES (16, 1, '蜀味烤鱼', 4, 1, '2022-06-09 22:15:37', '2022-08-31 14:27:25', 1, 1);
+INSERT INTO `category` VALUES (17, 1, '蜀味牛蛙', 5, 1, '2022-06-09 22:16:14', '2022-08-31 14:39:44', 1, 1);
+INSERT INTO `category` VALUES (18, 1, '特色蒸菜', 6, 1, '2022-06-09 22:17:42', '2022-06-09 22:17:42', 1, 1);
+INSERT INTO `category` VALUES (19, 1, '新鲜时蔬', 7, 1, '2022-06-09 22:18:12', '2022-06-09 22:18:28', 1, 1);
+INSERT INTO `category` VALUES (20, 1, '水煮鱼', 8, 1, '2022-06-09 22:22:29', '2022-06-09 22:23:45', 1, 1);
+INSERT INTO `category` VALUES (21, 1, '汤类', 11, 1, '2022-06-10 10:51:47', '2022-06-10 10:51:47', 1, 1);
+
+-- ----------------------------
+-- Table structure for dish
+-- ----------------------------
+DROP TABLE IF EXISTS `dish`;
+CREATE TABLE `dish`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '菜品名称',
+  `category_id` bigint NOT NULL COMMENT '菜品分类id',
+  `price` decimal(10, 2) NULL DEFAULT NULL COMMENT '菜品价格',
+  `image` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '图片',
+  `description` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '描述信息',
+  `status` int NULL DEFAULT 1 COMMENT '0 停售 1 起售',
+  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  `create_user` bigint NULL DEFAULT NULL COMMENT '创建人',
+  `update_user` bigint NULL DEFAULT NULL COMMENT '修改人',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_dish_name`(`name` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 71 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '菜品' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of dish
+-- ----------------------------
+INSERT INTO `dish` VALUES (46, '王老吉', 11, 6.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/41bfcacf-7ad4-4927-8b26-df366553a94c.png', '', 1, '2022-06-09 22:40:47', '2022-06-09 22:40:47', 1, 1);
+INSERT INTO `dish` VALUES (47, '北冰洋', 11, 4.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/4451d4be-89a2-4939-9c69-3a87151cb979.png', '还是小时候的味道', 1, '2022-06-10 09:18:49', '2022-06-10 09:18:49', 1, 1);
+INSERT INTO `dish` VALUES (48, '雪花啤酒', 11, 4.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/bf8cbfc1-04d2-40e8-9826-061ee41ab87c.png', '', 1, '2022-06-10 09:22:54', '2022-06-10 09:22:54', 1, 1);
+INSERT INTO `dish` VALUES (49, '米饭', 12, 2.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/76752350-2121-44d2-b477-10791c23a8ec.png', '精选五常大米', 1, '2022-06-10 09:30:17', '2022-06-10 09:30:17', 1, 1);
+INSERT INTO `dish` VALUES (50, '馒头', 12, 1.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/475cc599-8661-4899-8f9e-121dd8ef7d02.png', '优质面粉', 1, '2022-06-10 09:34:28', '2022-06-10 09:34:28', 1, 1);
+INSERT INTO `dish` VALUES (51, '老坛酸菜鱼', 20, 56.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/4a9cefba-6a74-467e-9fde-6e687ea725d7.png', '原料：汤，草鱼，酸菜', 1, '2022-06-10 09:40:51', '2022-06-10 09:40:51', 1, 1);
+INSERT INTO `dish` VALUES (52, '经典酸菜鮰鱼', 20, 66.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/5260ff39-986c-4a97-8850-2ec8c7583efc.png', '原料：酸菜，江团，鮰鱼', 1, '2022-06-10 09:46:02', '2022-06-10 09:46:02', 1, 1);
+INSERT INTO `dish` VALUES (53, '蜀味水煮草鱼', 20, 38.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/a6953d5a-4c18-4b30-9319-4926ee77261f.png', '原料：草鱼，汤', 1, '2022-06-10 09:48:37', '2022-06-10 09:48:37', 1, 1);
+INSERT INTO `dish` VALUES (54, '清炒小油菜', 19, 18.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/3613d38e-5614-41c2-90ed-ff175bf50716.png', '原料：小油菜', 1, '2022-06-10 09:51:46', '2022-06-10 09:51:46', 1, 1);
+INSERT INTO `dish` VALUES (55, '蒜蓉娃娃菜', 19, 18.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/4879ed66-3860-4b28-ba14-306ac025fdec.png', '原料：蒜，娃娃菜', 1, '2022-06-10 09:53:37', '2022-06-10 09:53:37', 1, 1);
+INSERT INTO `dish` VALUES (56, '清炒西兰花', 19, 18.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/e9ec4ba4-4b22-4fc8-9be0-4946e6aeb937.png', '原料：西兰花', 1, '2022-06-10 09:55:44', '2022-06-10 09:55:44', 1, 1);
+INSERT INTO `dish` VALUES (57, '炝炒圆白菜', 19, 18.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/22f59feb-0d44-430e-a6cd-6a49f27453ca.png', '原料：圆白菜', 1, '2022-06-10 09:58:35', '2022-06-10 09:58:35', 1, 1);
+INSERT INTO `dish` VALUES (58, '清蒸鲈鱼', 18, 98.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/c18b5c67-3b71-466c-a75a-e63c6449f21c.png', '原料：鲈鱼', 1, '2022-06-10 10:12:28', '2022-06-10 10:12:28', 1, 1);
+INSERT INTO `dish` VALUES (59, '东坡肘子', 18, 138.00, 'https://sky-take-out052311.oss-cn-shenzhen.aliyuncs.com/362757b8-9923-4d20-ad8f-8d813ddb3fdc.jpg', '原料：猪肘棒666', 1, '2022-06-10 10:24:03', '2022-06-10 10:24:03', 1, 1);
+INSERT INTO `dish` VALUES (60, '梅菜扣肉', 18, 58.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/6080b118-e30a-4577-aab4-45042e3f88be.png', '原料：猪肉，梅菜', 1, '2022-06-10 10:26:03', '2022-06-10 10:26:03', 1, 1);
+INSERT INTO `dish` VALUES (61, '剁椒鱼头', 18, 66.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/13da832f-ef2c-484d-8370-5934a1045a06.png', '原料：鲢鱼，剁椒', 1, '2022-06-10 10:28:54', '2022-06-10 10:28:54', 1, 1);
+INSERT INTO `dish` VALUES (62, '金汤酸菜牛蛙', 17, 88.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/7694a5d8-7938-4e9d-8b9e-2075983a2e38.png', '原料：鲜活牛蛙，酸菜', 1, '2022-06-10 10:33:05', '2022-06-10 10:33:05', 1, 1);
+INSERT INTO `dish` VALUES (63, '香锅牛蛙', 17, 88.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/f5ac8455-4793-450c-97ba-173795c34626.png', '配料：鲜活牛蛙，莲藕，青笋', 1, '2022-06-10 10:35:40', '2022-06-10 10:35:40', 1, 1);
+INSERT INTO `dish` VALUES (64, '馋嘴牛蛙', 17, 88.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/7a55b845-1f2b-41fa-9486-76d187ee9ee1.png', '配料：鲜活牛蛙，丝瓜，黄豆芽', 1, '2022-06-10 10:37:52', '2022-06-10 10:37:52', 1, 1);
+INSERT INTO `dish` VALUES (65, '草鱼2斤', 16, 68.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/b544d3ba-a1ae-4d20-a860-81cb5dec9e03.png', '原料：草鱼，黄豆芽，莲藕', 1, '2022-06-10 10:41:08', '2022-06-10 10:41:08', 1, 1);
+INSERT INTO `dish` VALUES (66, '江团鱼2斤', 16, 119.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/a101a1e9-8f8b-47b2-afa4-1abd47ea0a87.png', '配料：江团鱼，黄豆芽，莲藕', 1, '2022-06-10 10:42:42', '2022-06-10 10:42:42', 1, 1);
+INSERT INTO `dish` VALUES (67, '鮰鱼2斤', 16, 72.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/8cfcc576-4b66-4a09-ac68-ad5b273c2590.png', '原料：鮰鱼，黄豆芽，莲藕', 1, '2022-06-10 10:43:56', '2022-06-10 10:43:56', 1, 1);
+INSERT INTO `dish` VALUES (68, '鸡蛋汤', 21, 4.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/c09a0ee8-9d19-428d-81b9-746221824113.png', '配料：鸡蛋，紫菜', 1, '2022-06-10 10:54:25', '2022-06-10 10:54:25', 1, 1);
+INSERT INTO `dish` VALUES (69, '平菇豆腐汤', 21, 6.00, 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/16d0a3d6-2253-4cfc-9b49-bf7bd9eb2ad2.png', '配料：豆腐，平菇', 1, '2022-06-10 10:55:02', '2022-06-10 10:55:02', 1, 1);
+
+-- ----------------------------
+-- Table structure for dish_flavor
+-- ----------------------------
+DROP TABLE IF EXISTS `dish_flavor`;
+CREATE TABLE `dish_flavor`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `dish_id` bigint NOT NULL COMMENT '菜品',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '口味名称',
+  `value` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '口味数据list',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 107 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '菜品口味关系表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of dish_flavor
+-- ----------------------------
+INSERT INTO `dish_flavor` VALUES (40, 10, '甜味', '[\"无糖\",\"少糖\",\"半糖\",\"多糖\",\"全糖\"]');
+INSERT INTO `dish_flavor` VALUES (41, 7, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (42, 7, '温度', '[\"热饮\",\"常温\",\"去冰\",\"少冰\",\"多冰\"]');
+INSERT INTO `dish_flavor` VALUES (45, 6, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (46, 6, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (47, 5, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (48, 5, '甜味', '[\"无糖\",\"少糖\",\"半糖\",\"多糖\",\"全糖\"]');
+INSERT INTO `dish_flavor` VALUES (49, 2, '甜味', '[\"无糖\",\"少糖\",\"半糖\",\"多糖\",\"全糖\"]');
+INSERT INTO `dish_flavor` VALUES (50, 4, '甜味', '[\"无糖\",\"少糖\",\"半糖\",\"多糖\",\"全糖\"]');
+INSERT INTO `dish_flavor` VALUES (51, 3, '甜味', '[\"无糖\",\"少糖\",\"半糖\",\"多糖\",\"全糖\"]');
+INSERT INTO `dish_flavor` VALUES (52, 3, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (86, 52, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (87, 52, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (88, 51, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (89, 51, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (92, 53, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (93, 53, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (94, 54, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\"]');
+INSERT INTO `dish_flavor` VALUES (95, 56, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (96, 57, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (97, 60, '忌口', '[\"不要葱\",\"不要蒜\",\"不要香菜\",\"不要辣\"]');
+INSERT INTO `dish_flavor` VALUES (101, 66, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (102, 67, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (103, 65, '辣度', '[\"不辣\",\"微辣\",\"中辣\",\"重辣\"]');
+INSERT INTO `dish_flavor` VALUES (106, 59, '甜味', '[\"全糖\"]');
+
+-- ----------------------------
+-- Table structure for dish_sales_stat
+-- ----------------------------
+DROP TABLE IF EXISTS `dish_sales_stat`;
+CREATE TABLE `dish_sales_stat`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `dish_id` bigint NOT NULL COMMENT '菜品ID',
+  `sales_count` int NULL DEFAULT 0 COMMENT '销量',
+  `stat_date` date NOT NULL COMMENT '统计日期',
+  `stat_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'day' COMMENT 'day/week/month',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_dish_sales_stat_dish_id`(`dish_id` ASC) USING BTREE,
+  INDEX `idx_dish_sales_stat_date`(`stat_date` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '菜品销量统计表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of dish_sales_stat
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for dish_tag
+-- ----------------------------
+DROP TABLE IF EXISTS `dish_tag`;
+CREATE TABLE `dish_tag`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `dish_id` bigint NOT NULL COMMENT '菜品ID',
+  `tag_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '标签名',
+  `tag_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '标签类型：taste/nutrition/ingredient/scene',
+  `weight` decimal(5, 2) NULL DEFAULT 1.00 COMMENT '标签权重',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_dish_tag_dish_id`(`dish_id` ASC) USING BTREE,
+  INDEX `idx_dish_tag_name`(`tag_name` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '菜品推荐标签表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of dish_tag
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for employee
+-- ----------------------------
+DROP TABLE IF EXISTS `employee`;
+CREATE TABLE `employee`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '姓名',
+  `username` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '用户名',
+  `password` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '密码',
+  `phone` varchar(11) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '手机号',
+  `sex` varchar(2) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '性别',
+  `id_number` varchar(18) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '身份证号',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态 0:禁用，1:启用',
+  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  `create_user` bigint NULL DEFAULT NULL COMMENT '创建人',
+  `update_user` bigint NULL DEFAULT NULL COMMENT '修改人',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_username`(`username` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '员工信息' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of employee
+-- ----------------------------
+INSERT INTO `employee` VALUES (1, '管理员', 'admin', 'e10adc3949ba59abbe56e057f20f883e', '13812312312', '1', '110101199001010047', 1, '2022-02-15 15:51:20', '2022-02-17 09:16:20', 10, 1);
+INSERT INTO `employee` VALUES (2, '张三', '1235', 'e10adc3949ba59abbe56e057f20f883e', '15678945623', '女', '12312', 1, '2026-02-13 20:38:07', '2026-02-13 20:38:07', 10, 10);
+
+-- ----------------------------
+-- Table structure for order_detail
+-- ----------------------------
+DROP TABLE IF EXISTS `order_detail`;
+CREATE TABLE `order_detail`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '名字',
+  `image` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '图片',
+  `order_id` bigint NOT NULL COMMENT '订单id',
+  `dish_id` bigint NULL DEFAULT NULL COMMENT '菜品id',
+  `setmeal_id` bigint NULL DEFAULT NULL COMMENT '套餐id',
+  `dish_flavor` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '口味',
+  `number` int NOT NULL DEFAULT 1 COMMENT '数量',
+  `amount` decimal(10, 2) NOT NULL COMMENT '金额',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '订单明细表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of order_detail
+-- ----------------------------
+INSERT INTO `order_detail` VALUES (5, '炝炒圆白菜', 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/22f59feb-0d44-430e-a6cd-6a49f27453ca.png', 4, 57, NULL, '不要葱', 1, 18.00);
+INSERT INTO `order_detail` VALUES (6, '馋嘴牛蛙', 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/7a55b845-1f2b-41fa-9486-76d187ee9ee1.png', 4, 64, NULL, NULL, 1, 88.00);
+INSERT INTO `order_detail` VALUES (7, '经典酸菜鮰鱼', 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/5260ff39-986c-4a97-8850-2ec8c7583efc.png', 4, 52, NULL, '不要葱,不辣', 1, 66.00);
+INSERT INTO `order_detail` VALUES (8, '鸡蛋汤', 'https://sky-itcast.oss-cn-beijing.aliyuncs.com/c09a0ee8-9d19-428d-81b9-746221824113.png', 4, 68, NULL, NULL, 1, 4.00);
+
+-- ----------------------------
+-- Table structure for orders
+-- ----------------------------
+DROP TABLE IF EXISTS `orders`;
+CREATE TABLE `orders`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `number` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '订单号',
+  `status` int NOT NULL DEFAULT 1 COMMENT '订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消 7退款',
+  `user_id` bigint NOT NULL COMMENT '下单用户',
+  `address_book_id` bigint NOT NULL COMMENT '地址id',
+  `order_time` datetime NOT NULL COMMENT '下单时间',
+  `checkout_time` datetime NULL DEFAULT NULL COMMENT '结账时间',
+  `pay_method` int NOT NULL DEFAULT 1 COMMENT '支付方式 1微信,2支付宝',
+  `pay_status` tinyint NOT NULL DEFAULT 0 COMMENT '支付状态 0未支付 1已支付 2退款',
+  `amount` decimal(10, 2) NOT NULL COMMENT '实收金额',
+  `remark` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '备注',
+  `phone` varchar(11) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '手机号',
+  `address` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '地址',
+  `user_name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '用户名称',
+  `consignee` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '收货人',
+  `cancel_reason` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '订单取消原因',
+  `rejection_reason` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '订单拒绝原因',
+  `cancel_time` datetime NULL DEFAULT NULL COMMENT '订单取消时间',
+  `estimated_delivery_time` datetime NULL DEFAULT NULL COMMENT '预计送达时间',
+  `delivery_status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '配送状态  1立即送出  0选择具体时间',
+  `delivery_time` datetime NULL DEFAULT NULL COMMENT '送达时间',
+  `pack_amount` int NULL DEFAULT NULL COMMENT '打包费',
+  `tableware_number` int NULL DEFAULT NULL COMMENT '餐具数量',
+  `tableware_status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '餐具数量状态  1按餐量提供  0选择具体数量',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '订单表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of orders
+-- ----------------------------
+INSERT INTO `orders` VALUES (4, '1775217012937', 1, 4, 2, '2026-04-03 19:50:13', NULL, 1, 0, 186.00, '', '15678945623', NULL, NULL, '123', NULL, NULL, NULL, '2026-04-03 20:50:00', 0, NULL, 4, 0, 0);
+
+-- ----------------------------
+-- Table structure for recommend_result
+-- ----------------------------
+DROP TABLE IF EXISTS `recommend_result`;
+CREATE TABLE `recommend_result`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `session_id` bigint NOT NULL COMMENT '推荐会话ID',
+  `dish_id` bigint NULL DEFAULT NULL COMMENT '菜品ID',
+  `setmeal_id` bigint NULL DEFAULT NULL COMMENT '套餐ID',
+  `score` decimal(8, 2) NULL DEFAULT NULL COMMENT '推荐分数',
+  `reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '推荐理由',
+  `rank_no` int NULL DEFAULT NULL COMMENT '排序名次',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_recommend_result_session_id`(`session_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '推荐结果表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of recommend_result
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for recommend_session
+-- ----------------------------
+DROP TABLE IF EXISTS `recommend_session`;
+CREATE TABLE `recommend_session`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
+  `user_query` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '用户原始问题',
+  `parsed_intent` json NULL COMMENT '解析出的用户意图',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_recommend_session_user_id`(`user_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '推荐会话表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of recommend_session
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for setmeal
+-- ----------------------------
+DROP TABLE IF EXISTS `setmeal`;
+CREATE TABLE `setmeal`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `category_id` bigint NOT NULL COMMENT '菜品分类id',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '套餐名称',
+  `price` decimal(10, 2) NOT NULL COMMENT '套餐价格',
+  `status` int NULL DEFAULT 1 COMMENT '售卖状态 0:停售 1:起售',
+  `description` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '描述信息',
+  `image` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '图片',
+  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  `create_user` bigint NULL DEFAULT NULL COMMENT '创建人',
+  `update_user` bigint NULL DEFAULT NULL COMMENT '修改人',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_setmeal_name`(`name` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 32 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '套餐' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of setmeal
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for setmeal_dish
+-- ----------------------------
+DROP TABLE IF EXISTS `setmeal_dish`;
+CREATE TABLE `setmeal_dish`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `setmeal_id` bigint NULL DEFAULT NULL COMMENT '套餐id',
+  `dish_id` bigint NULL DEFAULT NULL COMMENT '菜品id',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '菜品名称 （冗余字段）',
+  `price` decimal(10, 2) NULL DEFAULT NULL COMMENT '菜品单价（冗余字段）',
+  `copies` int NULL DEFAULT NULL COMMENT '菜品份数',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 47 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '套餐菜品关系' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of setmeal_dish
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for shopping_cart
+-- ----------------------------
+DROP TABLE IF EXISTS `shopping_cart`;
+CREATE TABLE `shopping_cart`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '商品名称',
+  `image` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '图片',
+  `user_id` bigint NOT NULL COMMENT '主键',
+  `dish_id` bigint NULL DEFAULT NULL COMMENT '菜品id',
+  `setmeal_id` bigint NULL DEFAULT NULL COMMENT '套餐id',
+  `dish_flavor` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '口味',
+  `number` int NOT NULL DEFAULT 1 COMMENT '数量',
+  `amount` decimal(10, 2) NOT NULL COMMENT '金额',
+  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '购物车' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of shopping_cart
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for user
+-- ----------------------------
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `openid` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '微信用户唯一标识',
+  `name` varchar(32) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '姓名',
+  `phone` varchar(11) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '手机号',
+  `sex` varchar(2) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '性别',
+  `id_number` varchar(18) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '身份证号',
+  `avatar` varchar(500) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '头像',
+  `create_time` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_bin COMMENT = '用户信息' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user
+-- ----------------------------
+INSERT INTO `user` VALUES (4, 'oZV5K11s8O-IgVWCvat8L1bXmBRc', NULL, NULL, NULL, NULL, NULL, '2026-03-30 20:48:15');
+
+-- ----------------------------
+-- Table structure for user_food_preference
+-- ----------------------------
+DROP TABLE IF EXISTS `user_food_preference`;
+CREATE TABLE `user_food_preference`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `preference_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'like/dislike/allergy/budget/taste',
+  `preference_value` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '偏好值',
+  `source` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'manual/history/agent',
+  `weight` decimal(5, 2) NULL DEFAULT 1.00,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_user_food_preference_user_id`(`user_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户饮食偏好表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_food_preference
+-- ----------------------------
+
+SET FOREIGN_KEY_CHECKS = 1;
