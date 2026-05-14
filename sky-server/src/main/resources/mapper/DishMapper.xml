@@ -10,7 +10,10 @@
     </insert>
 
     <select id="pageQuery" resultType="com.sky.vo.DishVO">
-        select d.*, c.name as categoryName from dish d left outer join category c on d.category_id = c.id
+        select d.*, c.name as categoryName, ifnull(ds.stock, 0) as stock
+        from dish d
+        left outer join category c on d.category_id = c.id
+        left join dish_stock ds on d.id = ds.dish_id
         <where>
             <if test="name != null">
                 and d.name like concat('%', #{name}, '%')

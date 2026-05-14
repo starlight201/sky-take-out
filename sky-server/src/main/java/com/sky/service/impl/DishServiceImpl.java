@@ -8,9 +8,11 @@ import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
+import com.sky.entity.DishStock;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
+import com.sky.mapper.DishStockMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 @Service
@@ -36,6 +39,8 @@ public class DishServiceImpl implements DishService {
 
     @Autowired
     private SetmealMapper setmealMapper;
+    @Autowired
+    private DishStockMapper dishStockMapper;
     /**
      * 新增菜品以及保存口味
      *
@@ -48,6 +53,14 @@ public class DishServiceImpl implements DishService {
         dishMapper.insert(dish);
         // 获取菜品ID
         Long dishId = dish.getId();
+        DishStock dishStock = DishStock.builder()
+                .dishId(dishId)
+                .stock(dishDTO.getStock() == null ? 0 : dishDTO.getStock())
+                .version(0)
+                .createTime(LocalDateTime.now())
+                .updateTime(LocalDateTime.now())
+                .build();
+        dishStockMapper.insert(dishStock);
         // 保存口味
         List<DishFlavor> flavors = dishDTO.getFlavors();
         if (flavors != null && flavors.size() > 0) {
@@ -100,6 +113,7 @@ public class DishServiceImpl implements DishService {
 
         //批量删除菜品数据
         dishMapper.deleteByIds(ids);
+        dishStockMapper.deleteByDishIds(ids);
 
         //批量删除菜品关联的口味数据
         dishFlavorMapper.deleteByDishIds(ids);
@@ -120,6 +134,8 @@ public class DishServiceImpl implements DishService {
         // 封装数据
         DishVO dishVO = new DishVO();
         BeanUtils.copyProperties(dish, dishVO);
+        DishStock dishStock = dishStockMapper.getByDishId(id);
+        dishVO.setStock(dishStock == null ? 0 : dishStock.getStock());
         dishVO.setFlavors(flavors);
 
         return dishVO;
@@ -136,6 +152,16 @@ public class DishServiceImpl implements DishService {
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO, dish);
         dishMapper.update(dish);
+        if (dishDTO.getStock() != null) {
+            DishStock dishStock = DishStock.builder()
+                    .dishId(dishDTO.getId())
+                    .stock(dishDTO.getStock())
+                    .version(0)
+                    .createTime(LocalDateTime.now())
+                    .updateTime(LocalDateTime.now())
+                    .build();
+            dishStockMapper.upsert(dishStock);
+        }
 
         // 删除菜品的口味
         dishFlavorMapper.deleteByDishId(dishDTO.getId());
@@ -162,6 +188,8 @@ public class DishServiceImpl implements DishService {
         for (Dish d : dishList) {
             DishVO dishVO = new DishVO();
             BeanUtils.copyProperties(d,dishVO);
+            DishStock dishStock = dishStockMapper.getByDishId(d.getId());
+            dishVO.setStock(dishStock == null ? 0 : dishStock.getStock());
 
             //根据菜品id查询对应的口味
             List<DishFlavor> flavors = dishFlavorMapper.getByDishId(d.getId());

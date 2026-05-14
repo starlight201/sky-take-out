@@ -8,6 +8,7 @@ import com.sky.entity.ShoppingCart;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.mapper.ShoppingCartMapper;
+import com.sky.service.DishStockService;
 import com.sky.service.ShoppingCartService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     @Autowired
     private SetmealMapper setmealMapper;
+    @Autowired
+    private DishStockService dishStockService;
 
     /**
      * 添加购物车
@@ -45,6 +48,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         // 存在则更新数量
         if (list != null && list.size() > 0) {
             ShoppingCart cart = list.get(0);
+            if (cart.getDishId() != null) {
+                dishStockService.checkDishStock(cart.getDishId(), cart.getNumber() + 1);
+            } else if (cart.getSetmealId() != null) {
+                dishStockService.checkSetmealStock(cart.getSetmealId(), cart.getNumber() + 1);
+            }
             cart.setNumber(cart.getNumber() + 1);
             shoppingCartMapper.updateNumberById(cart);
         } else {
@@ -52,6 +60,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             // 判断是单品还是套餐
             Long dishId = shoppingCartDTO.getDishId();
             if (dishId != null) {
+                dishStockService.checkDishStock(dishId, 1);
                 // 单品
                 Dish dish = dishMapper.getById(dishId);
                 shoppingCart.setName(dish.getName());
@@ -62,6 +71,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             } else {
                 // 套餐
                 Long setmealId = shoppingCartDTO.getSetmealId();
+                dishStockService.checkSetmealStock(setmealId, 1);
                 Setmeal setmeal = setmealMapper.getById(setmealId);
                 shoppingCart.setName(setmeal.getName());
                 shoppingCart.setImage(setmeal.getImage());

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.AgentAdminMapper">
+
+    <insert id="insertDishTag" parameterType="com.sky.entity.DishTag" useGeneratedKeys="true" keyProperty="id">
+        insert into dish_tag (dish_id, tag_name, tag_type, weight, create_time)
+        values (#{dishId}, #{tagName}, #{tagType}, #{weight}, #{createTime})
+    </insert>
+
+    <update id="updateDishTag" parameterType="com.sky.entity.DishTag">
+        update dish_tag
+        <set>
+            <if test="dishId != null">dish_id = #{dishId},</if>
+            <if test="tagName != null">tag_name = #{tagName},</if>
+            <if test="tagType != null">tag_type = #{tagType},</if>
+            <if test="weight != null">weight = #{weight}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="pageDishTags" resultType="com.sky.entity.DishTag">
+        select * from dish_tag
+        <where>
+            <if test="dishId != null">and dish_id = #{dishId}</if>
+            <if test="tagName != null and tagName != ''">and tag_name like concat('%', #{tagName}, '%')</if>
+            <if test="tagType != null and tagType != ''">and tag_type = #{tagType}</if>
+        </where>
+        order by create_time desc, id desc
+    </select>
+
+    <select id="pageRecommendSessions" resultType="com.sky.vo.RecommendSessionLogVO">
+        select
+            rs.id,
+            rs.user_id as userId,
+            rs.user_query as userQuery,
+            rs.parsed_intent as parsedIntent,
+            count(rr.id) as resultCount,
+            rs.create_time as createTime
+        from recommend_session rs
+        left join recommend_result rr on rs.id = rr.session_id
+        <where>
+            <if test="userId != null">and rs.user_id = #{userId}</if>
+            <if test="query != null and query != ''">and rs.user_query like concat('%', #{query}, '%')</if>
+        </where>
+        group by rs.id, rs.user_id, rs.user_query, rs.parsed_intent, rs.create_time
+        order by rs.create_time desc
+    </select>
+
+    <select id="getRecommendSession" resultType="com.sky.vo.RecommendSessionLogVO">
+        select
+            rs.id,
+            rs.user_id as userId,
+            rs.user_query as userQuery,
+            rs.parsed_intent as parsedIntent,
+            count(rr.id) as resultCount,
+            rs.create_time as createTime
+        from recommend_session rs
+        left join recommend_result rr on rs.id = rr.session_id
+        where rs.id = #{sessionId}
+        group by rs.id, rs.user_id, rs.user_query, rs.parsed_intent, rs.create_time
+    </select>
+
+    <select id="listRecommendResults" resultType="com.sky.vo.RecommendResultLogVO">
+        select
+            rr.id,
+            rr.session_id as sessionId,
+            rr.dish_id as dishId,
+            rr.setmeal_id as setmealId,
+            ifnull(d.name, s.name) as itemName,
+            rr.score,
+            rr.reason,
+            rr.rank_no as rankNo,
+            rr.create_time as createTime
+        from recommend_result rr
+        left join dish d on rr.dish_id = d.id
+        left join setmeal s on rr.setmeal_id = s.id
+        where rr.session_id = #{sessionId}
+        order by rr.rank_no asc
+    </select>
+
+    <select id="listToolCalls" resultType="com.sky.vo.AgentToolCallLogVO">
+        select
+            id,
+            session_id as sessionId,
+            tool_name as toolName,
+            request_params as requestParams,
+            response_summary as responseSummary,
+            success,
+            cost_ms as costMs,
+            create_time as createTime
+        from agent_tool_call_log
+        where session_id = #{sessionId}
+        order by create_time asc, id asc
+    </select>
+</mapper>

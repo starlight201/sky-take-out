@@ -19,6 +19,7 @@ import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.ShoppingCartMapper;
 import com.sky.result.PageResult;
+import com.sky.service.DishStockService;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
@@ -53,6 +54,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private ShoppingCartMapper shoppingCartMapper;
+    @Autowired
+    private DishStockService dishStockService;
 
     @Autowired
     private WeChatPayUtil weChatPayUtil;
@@ -86,6 +89,7 @@ public class OrderServiceImpl implements OrderService {
             // 抛出异常
             throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
+        dishStockService.deductShoppingCartStock(cartList);
 
         // 订单表插入一条数据
         Orders orders = new Orders();

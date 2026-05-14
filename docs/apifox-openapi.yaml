@@ -1,0 +1,1026 @@
+openapi: 3.0.3
+info:
+  title: 苍穹外卖智能推荐 Agent API
+  version: 1.0.0
+  description: |
+    适用于 Apifox 导入的 OpenAPI 文档。
+
+    本文档包含：
+    - Spring Boot 用户侧推荐入口
+    - Spring Boot 内部 Agent 数据接口
+    - Spring Boot 管理端标签/日志接口
+    - Python FastAPI Agent 推荐接口
+
+    说明：
+    - Spring Boot 默认地址：http://127.0.0.1:8080
+    - Python Agent 默认地址：http://127.0.0.1:8000
+    - 内部接口可选使用 X-Agent-Token。
+    - 用户侧接口使用 authentication 请求头。
+    - 管理端接口使用 token 请求头。
+servers:
+  - url: http://127.0.0.1:8080
+    description: Spring Boot 服务
+  - url: http://127.0.0.1:8000
+    description: Python Agent 服务
+
+tags:
+  - name: User Recommend
+    description: 用户侧智能推荐接口
+  - name: Internal Agent
+    description: Python Agent 调用的 Spring Boot 内部接口
+  - name: Admin Agent
+    description: 管理端 Agent 标签和日志接口
+  - name: Python Agent
+    description: Python FastAPI 推荐服务接口
+
+paths:
+  /user/recommend-agent:
+    servers:
+      - url: http://127.0.0.1:8080
+    post:
+      tags:
+        - User Recommend
+      summary: 用户智能推荐
+      description: Spring Boot 从用户 JWT 中解析 userId，然后调用 Python Agent 推荐服务。
+      security:
+        - UserToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendAgentRequestDTO'
+            example:
+              query: 我今天想吃辣的，预算30元以内
+      responses:
+        '200':
+          description: 推荐结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRecommendAgentResponse'
+
+  /user/recommend-agent/stream:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - User Recommend
+      summary: 用户智能推荐 SSE 流式输出
+      description: |
+        Spring Boot 转发 Python Agent 的 SSE 流。
+
+        事件类型：
+        - metadata：完整推荐元数据
+        - message：大模型生成文本片段
+        - done：流结束
+      security:
+        - UserToken: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          example: 我今天想吃辣的，预算30元以内
+      responses:
+        '200':
+          description: SSE 事件流
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /internal/agent/shop/status:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Internal Agent
+      summary: 查询店铺营业状态
+      security:
+        - AgentToken: []
+      responses:
+        '200':
+          description: 店铺状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAgentShopStatus'
+
+  /internal/agent/dishes/available:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Internal Agent
+      summary: 查询可推荐菜品
+      security:
+        - AgentToken: []
+      responses:
+        '200':
+          description: 可推荐菜品列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAgentAvailableItems'
+
+  /internal/agent/setmeals/available:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Internal Agent
+      summary: 查询可推荐套餐
+      security:
+        - AgentToken: []
+      responses:
+        '200':
+          description: 可推荐套餐列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAgentAvailableItems'
+
+  /internal/agent/users/{userId}/preferences:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Internal Agent
+      summary: 查询用户饮食偏好
+      security:
+        - AgentToken: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: 用户偏好
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAgentUserPreference'
+
+  /internal/agent/users/{userId}/orders/recent:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Internal Agent
+      summary: 查询用户近期已完成订单
+      security:
+        - AgentToken: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 30
+          example: 30
+      responses:
+        '200':
+          description: 近期订单聚合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultAgentRecentOrders'
+
+  /internal/agent/recommend/log:
+    servers:
+      - url: http://127.0.0.1:8080
+    post:
+      tags:
+        - Internal Agent
+      summary: 保存推荐会话日志
+      security:
+        - AgentToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendLogDTO'
+            example:
+              userId: 4
+              query: 我今天想吃辣的，预算30元以内
+              intent:
+                tasteTags:
+                  - 辣
+                budget: 30
+              items:
+                - dishId: 53
+                  score: 86.5
+                  reason: 符合辣味需求，价格接近预算
+              toolCalls:
+                - toolName: get_available_dishes
+                  requestParams: /internal/agent/dishes/available
+                  responseSummary: 返回20条菜品
+                  success: 1
+                  costMs: 20
+      responses:
+        '200':
+          description: 推荐会话 ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLong'
+
+  /admin/agent/dish-tags:
+    servers:
+      - url: http://127.0.0.1:8080
+    post:
+      tags:
+        - Admin Agent
+      summary: 新增菜品标签
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DishTagDTO'
+            example:
+              dishId: 53
+              tagName: 辣
+              tagType: taste
+              weight: 1.0
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultString'
+    put:
+      tags:
+        - Admin Agent
+      summary: 修改菜品标签
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DishTagDTO'
+            example:
+              id: 1
+              dishId: 53
+              tagName: 辣
+              tagType: taste
+              weight: 1.0
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultString'
+
+  /admin/agent/dish-tags/{id}:
+    servers:
+      - url: http://127.0.0.1:8080
+    delete:
+      tags:
+        - Admin Agent
+      summary: 删除菜品标签
+      security:
+        - AdminToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultString'
+
+  /admin/agent/dish-tags/page:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Admin Agent
+      summary: 菜品标签分页查询
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: dishId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          example: 53
+        - name: tagName
+          in: query
+          required: false
+          schema:
+            type: string
+          example: 辣
+        - name: tagType
+          in: query
+          required: false
+          schema:
+            type: string
+          example: taste
+      responses:
+        '200':
+          description: 标签分页结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDishTagPage'
+
+  /admin/agent/recommend-logs/page:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Admin Agent
+      summary: 推荐日志分页查询
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          example: 4
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          example: 辣
+      responses:
+        '200':
+          description: 推荐日志分页结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRecommendLogPage'
+
+  /admin/agent/recommend-logs/{sessionId}:
+    servers:
+      - url: http://127.0.0.1:8080
+    get:
+      tags:
+        - Admin Agent
+      summary: 推荐日志详情
+      security:
+        - AdminToken: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: 推荐日志详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultRecommendLogDetail'
+
+  /health:
+    servers:
+      - url: http://127.0.0.1:8000
+    get:
+      tags:
+        - Python Agent
+      summary: Python Agent 健康检查
+      responses:
+        '200':
+          description: 服务状态
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/recommend:
+    servers:
+      - url: http://127.0.0.1:8000
+    post:
+      tags:
+        - Python Agent
+      summary: Python Agent 普通推荐
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PythonRecommendRequest'
+            example:
+              userId: 4
+              query: 我今天想吃辣的，预算30元以内
+      responses:
+        '200':
+          description: 推荐结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendAgentResponse'
+
+  /api/recommend/stream:
+    servers:
+      - url: http://127.0.0.1:8000
+    post:
+      tags:
+        - Python Agent
+      summary: Python Agent SSE 流式推荐
+      description: |
+        事件类型：
+        - metadata：完整推荐元数据
+        - message：大模型文本片段
+        - done：结束
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PythonRecommendRequest'
+            example:
+              userId: 4
+              query: 我今天想吃辣的，预算30元以内
+      responses:
+        '200':
+          description: SSE 事件流
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    UserToken:
+      type: apiKey
+      in: header
+      name: authentication
+      description: 用户端 JWT 请求头
+    AdminToken:
+      type: apiKey
+      in: header
+      name: token
+      description: 管理端 JWT 请求头
+    AgentToken:
+      type: apiKey
+      in: header
+      name: X-Agent-Token
+      description: 内部 Agent 调用令牌；未配置 SKY_AGENT_INTERNAL_TOKEN 时可为空
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+    PageSize:
+      name: pageSize
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 10
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      example: 4
+
+  schemas:
+    ResultString:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: string
+              nullable: true
+
+    ResultLong:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: integer
+              format: int64
+              example: 1
+
+    ResultBase:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1
+        msg:
+          type: string
+          nullable: true
+          example: null
+
+    PageResult:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+          example: 1
+        records:
+          type: array
+          items:
+            type: object
+
+    RecommendAgentRequestDTO:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          example: 我今天想吃辣的，预算30元以内
+
+    PythonRecommendRequest:
+      type: object
+      required:
+        - userId
+        - query
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 4
+        query:
+          type: string
+          example: 我今天想吃辣的，预算30元以内
+
+    RecommendAgentResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 4
+        query:
+          type: string
+          example: 我今天想吃辣的，预算30元以内
+        answer:
+          type: string
+          example: 为你优先推荐：蜀味水煮草鱼。
+        intent:
+          type: object
+          additionalProperties: true
+          example:
+            tasteTags:
+              - 辣
+            budget: 30
+            excludeTags: []
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendAgentItem'
+        sessionId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 1
+
+    ResultRecommendAgentResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/RecommendAgentResponse'
+
+    RecommendAgentItem:
+      type: object
+      properties:
+        dishId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 53
+        setmealId:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        itemType:
+          type: string
+          enum:
+            - dish
+            - setmeal
+          example: dish
+        name:
+          type: string
+          example: 蜀味水煮草鱼
+        price:
+          type: number
+          format: double
+          example: 38.00
+        score:
+          type: number
+          format: double
+          example: 86.50
+        reason:
+          type: string
+          example: 符合辣味需求，当前可售且综合评分靠前
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - 辣
+            - 鱼
+        salesCount:
+          type: integer
+          example: 0
+        image:
+          type: string
+          nullable: true
+
+    AgentShopStatusVO:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 1
+        message:
+          type: string
+          example: 店铺营业中
+
+    ResultAgentShopStatus:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AgentShopStatusVO'
+
+    AgentAvailableItemVO:
+      type: object
+      properties:
+        dishId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 53
+        setmealId:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        itemType:
+          type: string
+          example: dish
+        name:
+          type: string
+          example: 蜀味水煮草鱼
+        price:
+          type: number
+          format: double
+          example: 38.00
+        status:
+          type: integer
+          example: 1
+        category:
+          type: string
+          example: 水煮鱼
+        categoryStatus:
+          type: integer
+          example: 1
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - 辣
+            - 鱼
+        salesCount:
+          type: integer
+          example: 0
+        image:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    ResultAgentAvailableItems:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentAvailableItemVO'
+
+    AgentUserPreferenceVO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 4
+        likes:
+          type: array
+          items:
+            type: string
+        dislikes:
+          type: array
+          items:
+            type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        defaultBudget:
+          type: number
+          format: double
+          nullable: true
+
+    ResultAgentUserPreference:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AgentUserPreferenceVO'
+
+    AgentRecentOrderVO:
+      type: object
+      properties:
+        dishId:
+          type: integer
+          format: int64
+          nullable: true
+        setmealId:
+          type: integer
+          format: int64
+          nullable: true
+        dishName:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        count:
+          type: integer
+
+    ResultAgentRecentOrders:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentRecentOrderVO'
+
+    RecommendLogDTO:
+      type: object
+      required:
+        - userId
+        - query
+      properties:
+        userId:
+          type: integer
+          format: int64
+        query:
+          type: string
+        intent:
+          type: object
+          additionalProperties: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendLogItemDTO'
+        toolCalls:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendToolCallDTO'
+
+    RecommendLogItemDTO:
+      type: object
+      properties:
+        dishId:
+          type: integer
+          format: int64
+          nullable: true
+        setmealId:
+          type: integer
+          format: int64
+          nullable: true
+        score:
+          type: number
+          format: double
+        reason:
+          type: string
+
+    RecommendToolCallDTO:
+      type: object
+      properties:
+        toolName:
+          type: string
+        requestParams:
+          type: string
+        responseSummary:
+          type: string
+        success:
+          type: integer
+          example: 1
+        costMs:
+          type: integer
+          example: 20
+
+    DishTagDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        dishId:
+          type: integer
+          format: int64
+          example: 53
+        tagName:
+          type: string
+          example: 辣
+        tagType:
+          type: string
+          example: taste
+        weight:
+          type: number
+          format: double
+          example: 1.0
+
+    DishTag:
+      allOf:
+        - $ref: '#/components/schemas/DishTagDTO'
+        - type: object
+          properties:
+            createTime:
+              type: string
+              format: date-time
+
+    ResultDishTagPage:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  format: int64
+                records:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DishTag'
+
+    RecommendSessionLogVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        userQuery:
+          type: string
+        parsedIntent:
+          type: string
+        resultCount:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+
+    ResultRecommendLogPage:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  format: int64
+                records:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RecommendSessionLogVO'
+
+    RecommendResultLogVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        sessionId:
+          type: integer
+          format: int64
+        dishId:
+          type: integer
+          format: int64
+          nullable: true
+        setmealId:
+          type: integer
+          format: int64
+          nullable: true
+        itemName:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: double
+        reason:
+          type: string
+        rankNo:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+
+    AgentToolCallLogVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        sessionId:
+          type: integer
+          format: int64
+        toolName:
+          type: string
+        requestParams:
+          type: string
+        responseSummary:
+          type: string
+        success:
+          type: integer
+        costMs:
+          type: integer
+        createTime:
+          type: string
+          format: date-time
+
+    RecommendLogDetailVO:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/RecommendSessionLogVO'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendResultLogVO'
+        toolCalls:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentToolCallLogVO'
+
+    ResultRecommendLogDetail:
+      allOf:
+        - $ref: '#/components/schemas/ResultBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/RecommendLogDetailVO'

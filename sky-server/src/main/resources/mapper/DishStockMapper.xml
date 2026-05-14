@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.DishStockMapper">
+
+    <insert id="insert" parameterType="com.sky.entity.DishStock" useGeneratedKeys="true" keyProperty="id">
+        insert into dish_stock (dish_id, stock, version, create_time, update_time)
+        values (#{dishId}, #{stock}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <insert id="upsert" parameterType="com.sky.entity.DishStock">
+        insert into dish_stock (dish_id, stock, version, create_time, update_time)
+        values (#{dishId}, #{stock}, #{version}, #{createTime}, #{updateTime})
+        on duplicate key update
+            stock = values(stock),
+            version = version + 1,
+            update_time = values(update_time)
+    </insert>
+
+    <update id="increase">
+        update dish_stock
+        set stock = stock + #{quantity},
+            version = version + 1,
+            update_time = now()
+        where dish_id = #{dishId}
+    </update>
+
+    <update id="decreaseWithVersion">
+        update dish_stock
+        set stock = stock - #{quantity},
+            version = version + 1,
+            update_time = now()
+        where id = #{id}
+            and version = #{version}
+            and stock &gt;= #{quantity}
+    </update>
+
+    <delete id="deleteByDishIds">
+        delete from dish_stock where dish_id in
+        <foreach collection="list" item="dishId" open="(" close=")" separator=",">
+            #{dishId}
+        </foreach>
+    </delete>
+</mapper>

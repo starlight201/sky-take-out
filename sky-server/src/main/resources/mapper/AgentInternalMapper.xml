@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.AgentInternalMapper">
+
+    <select id="listAvailableDishes" resultType="com.sky.vo.AgentAvailableItemRawVO">
+        select
+            d.id as dishId,
+            null as setmealId,
+            'dish' as itemType,
+            d.name,
+            d.price,
+            d.status,
+            c.name as category,
+            c.status as categoryStatus,
+            group_concat(distinct dt.tag_name order by dt.tag_name separator ',') as tagNames,
+            ifnull(s.sales_count, 0) as salesCount,
+            d.image,
+            d.description
+        from dish d
+        left join category c on d.category_id = c.id
+        left join dish_tag dt on d.id = dt.dish_id
+        left join (
+            select dish_id, sum(sales_count) as sales_count
+            from dish_sales_stat
+            where stat_date &gt;= date_sub(curdate(), interval 30 day)
+            group by dish_id
+        ) s on d.id = s.dish_id
+        where d.status = 1 and c.status = 1
+        group by d.id, d.name, d.price, d.status, c.name, c.status, s.sales_count, d.image, d.description
+        order by salesCount desc, d.update_time desc
+    </select>
+
+    <select id="listAvailableSetmeals" resultType="com.sky.vo.AgentAvailableItemRawVO">
+        select
+            s.id as setmealId,
+            null as dishId,
+            'setmeal' as itemType,
+            s.name,
+            s.price,
+            s.status,
+            c.name as category,
+            c.status as categoryStatus,
+            group_concat(distinct dt.tag_name order by dt.tag_name separator ',') as tagNames,
+            ifnull(sum(case when o.status = 5 and o.order_time &gt;= date_sub(now(), interval 30 day) then od.number else 0 end), 0) as salesCount,
+            s.image,
+            s.description
+        from setmeal s
+        left join category c on s.category_id = c.id
+        left join setmeal_dish sd on s.id = sd.setmeal_id
+        left join dish_tag dt on sd.dish_id = dt.dish_id
+        left join order_detail od on s.id = od.setmeal_id
+        left join orders o on od.order_id = o.id
+        where s.status = 1 and c.status = 1
+        group by s.id, s.name, s.price, s.status, c.name, c.status, s.image, s.description
+        order by salesCount desc, s.update_time desc
+    </select>
+
+    <select id="listUserPreferences" resultType="com.sky.entity.UserFoodPreference">
+        select * from user_food_preference
+        where user_id = #{userId}
+        order by weight desc, update_time desc
+    </select>
+
+    <select id="listRecentOrders" resultType="com.sky.vo.AgentRecentOrderRawVO">
+        select
+            od.dish_id as dishId,
+            od.setmeal_id as setmealId,
+            od.name as dishName,
+            c.name as category,
+            group_concat(distinct dt.tag_name order by dt.tag_name separator ',') as tagNames,
+            sum(od.number) as count
+        from orders o
+        inner join order_detail od on o.id = od.order_id
+        left join dish d on od.dish_id = d.id
+        left join setmeal s on od.setmeal_id = s.id
+        left join category c on c.id = ifnull(d.category_id, s.category_id)
+        left join setmeal_dish sd on s.id = sd.setmeal_id
+        left join dish_tag dt on dt.dish_id = ifnull(d.id, sd.dish_id)
+        where o.user_id = #{userId}
+            and o.status = 5
+            and o.order_time &gt;= #{beginTime}
+        group by od.dish_id, od.setmeal_id, od.name, c.name
+        order by count desc
+    </select>
+
+    <insert id="insertRecommendSession" parameterType="com.sky.entity.RecommendSession" useGeneratedKeys="true" keyProperty="id">
+        insert into recommend_session (user_id, user_query, parsed_intent, create_time)
+        values (#{userId}, #{userQuery}, #{parsedIntent}, #{createTime})
+    </insert>
+
+    <insert id="insertRecommendResult" parameterType="com.sky.entity.RecommendResult">
+        insert into recommend_result (session_id, dish_id, setmeal_id, score, reason, rank_no, create_time)
+        values (#{sessionId}, #{dishId}, #{setmealId}, #{score}, #{reason}, #{rankNo}, #{createTime})
+    </insert>
+
+    <insert id="insertAgentToolCallLog" parameterType="com.sky.entity.AgentToolCallLog">
+        insert into agent_tool_call_log (session_id, tool_name, request_params, response_summary, success, cost_ms, create_time)
+        values (#{sessionId}, #{toolName}, #{requestParams}, #{responseSummary}, #{success}, #{costMs}, #{createTime})
+    </insert>
+</mapper>

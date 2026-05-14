@@ -53,3 +53,8 @@ sky:
   wechat:
     appid: ${sky.wechat.appid}
     secret: ${sky.wechat.secret}
+  agent:
+    base-url: ${SKY_AGENT_BASE_URL:http://127.0.0.1:8000}
+    internal-token: ${SKY_AGENT_INTERNAL_TOKEN:}
+    connect-timeout: ${SKY_AGENT_CONNECT_TIMEOUT:3000}
+    read-timeout: ${SKY_AGENT_READ_TIMEOUT:15000}
